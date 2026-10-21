@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', fetchTasks);
+const DEFAULT_PRIORITY = 'Medium';
+
+ document.addEventListener('DOMContentLoaded', fetchTasks);
 
 async function fetchTasks() {
     const response = await fetch('/api/tasks');
@@ -8,27 +10,44 @@ async function fetchTasks() {
 
     tasks.forEach(task => {
         const li = document.createElement('li');
-        li.innerHTML = `
-            <span>${task.title}</span>
-            <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
-        `;
+        const taskTitle = document.createElement('span');
+        const priority = task.priority || DEFAULT_PRIORITY;
+        const priorityLabel = document.createElement('span');
+        const deleteButton = document.createElement('button');
+
+        taskTitle.textContent = task.title;
+        priorityLabel.textContent = priority;
+        priorityLabel.className = `priority priority-${priority.toLowerCase()}`;
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'delete-btn';
+        deleteButton.addEventListener('click', () => deleteTask(task.id));
+
+        const details = document.createElement('span');
+        details.className = 'task-details';
+        details.append(taskTitle, priorityLabel);
+        li.append(details, deleteButton);
         taskList.appendChild(li);
     });
 }
 
 async function addTask() {
     const titleInput = document.getElementById('task-title');
+    const priorityInput = document.getElementById('task-priority');
     const title = titleInput.value.trim();
+    const priority = priorityInput && priorityInput.value
+        ? priorityInput.value
+        : DEFAULT_PRIORITY;
 
     if (!title) return;
 
     await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
+        body: JSON.stringify({ title, priority })
     });
 
     titleInput.value = '';
+    if (priorityInput) priorityInput.value = DEFAULT_PRIORITY;
     fetchTasks();
 }
 
